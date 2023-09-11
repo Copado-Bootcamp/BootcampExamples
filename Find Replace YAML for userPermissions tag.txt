@@ -46,13 +46,12 @@ regex_lib:
 # e.g. the reg ex base scopes findings to fields. A rule will define which fields in which objects should be deleted or replaced.
 rules:
 
-    ## Remove userPermissions (System Permissions and App Permissions) from Profiles and Perm Sets
-    ## Use Case: Remove all userPermission tags on Profiles and Permission Sets, in order to handle them manually
+    ## Remove userPermissions (System Permissions and App Permissions) from Profiles
+    ## Use Case: Remove all userPermission tags on Profiles, in order to handle them manually
     # this will be performed when committing from or deploying to any environment/branch in the Pipeline 
     remove-all-user-permissions:
         extensions:
             - profile
-            - permissionset
         regex_name: 'remove-simple-tag'
         replace_values:
             - userPermissions
