@@ -1,0 +1,22 @@
+@IsTest
+private class TestMethod4 {
+    @IsTest static void testCommunityOrigin() {
+        // Create test data
+        Case c = new Case(Origin='Community', Status='New');
+        insert c;
+
+        // Query for Copado Support Queue Id
+        Id queueId = [SELECT Id FROM Group WHERE Type='Queue' AND Name='Copado Support Queue' LIMIT 1].Id;
+
+        // Perform test
+        Test.startTest();
+        CaseUpdateHandler.updateCases(new List<Case>{c});
+        Test.stopTest();
+
+        // Retrieve updated case
+        Case updatedCase = [SELECT OwnerId FROM Case WHERE Id = :c.Id];
+
+        // Assert that the Case OwnerId is set to the Copado Support Queue
+        System.assertEquals(queueId, updatedCase.OwnerId, 'Case OwnerId does not match Copado Support Queue Id.');
+    }
+}
