@@ -1,0 +1,27 @@
+@IsTest
+private class TestMethod1 {
+    @IsTest static void testPartnerEscalation() {
+        // Setup - Create a Partner Account
+        Account partnerAccount = new Account(Name='Test Partner Account', Type='Partner');
+        insert partnerAccount;
+
+        // Setup - Create a Case related to the Partner Account
+        Case partnerCase = new Case(AccountId=partnerAccount.Id, Status='New', IsEscalated=false);
+        insert partnerCase;
+
+        // Query for the Partner Escalation Queue Id to use in assertions
+        Id partnerEscalationQueueId = [SELECT Id FROM Group WHERE Type='Queue' AND Name='Partner Escalation Queue' LIMIT 1].Id;
+
+        // Act - Call the method under test
+        Test.startTest();
+        CaseUpdateHandler.updateCases(new List<Case>{partnerCase});
+        Test.stopTest();
+
+        // Assert - Retrieve the updated case and verify changes
+        partnerCase = [SELECT OwnerId, Status, IsEscalated FROM Case WHERE Id = :partnerCase.Id];
+        
+        System.assertEquals(partnerEscalationQueueId, partnerCase.OwnerId, 'The case owner should be set to the Partner Escalation Queue.');
+        System.assertEquals('Escalated', partnerCase.Status, 'The case status should be set to "Escalated".');
+        System.assertEquals(true, partnerCase.IsEscalated, 'The case should be marked as escalated.');
+    }
+}
