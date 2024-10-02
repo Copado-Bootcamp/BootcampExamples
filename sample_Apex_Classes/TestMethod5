@@ -1,0 +1,15 @@
+@IsTest
+private class TestMethod5 {
+    @IsTest static void testHighPriorityEscalation() {
+        Case c = new Case(Priority='High', Status='New');
+        insert c;
+
+        Test.startTest();
+        CaseUpdateHandler.updateCases(new List<Case>{c});
+        Test.stopTest();
+
+        Case updatedCase = [SELECT Status, IsEscalated FROM Case WHERE Id = :c.Id];
+        System.assertEquals('Escalated', updatedCase.Status);
+        System.assertEquals(true, updatedCase.IsEscalated);
+    }
+}
