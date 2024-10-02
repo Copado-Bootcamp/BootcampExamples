@@ -1,0 +1,66 @@
+public class CaseUpdateHandler {
+
+    public static void updateCases(List<Case> cases) {
+        // Pre-fetch the Partner Escalation Queue Id to optimize SOQL queries
+        Id partnerEscalationQueueId = getQueueIdByName('Partner Escalation Queue');
+        Id copadoSupportQueueId = getQueueIdByName('Copado Support Queue'); // Assuming Method 4 might need this
+        
+        // Collect all AccountIds and ContactIds from the cases to minimize SOQL queries
+        Set<Id> accountIds = new Set<Id>();
+        Set<Id> contactIds = new Set<Id>();
+        for (Case c : cases) {
+            if (c.AccountId != null) accountIds.add(c.AccountId);
+            if (c.ContactId != null) contactIds.add(c.ContactId);
+        }
+        
+        // Query all related Accounts and Contacts at once
+        Map<Id, Account> accountMap = new Map<Id, Account>([SELECT Id, Type FROM Account WHERE Id IN :accountIds]);
+        Map<Id, Contact> contactMap = new Map<Id, Contact>([SELECT Id, HasOptedOutOfEmail FROM Contact WHERE Id IN :contactIds]);
+        
+        for (Case c : cases) {
+            // Method 1: Partner Account Escalation
+            Account relatedAccount = accountMap.get(c.AccountId);
+            if (relatedAccount != null && relatedAccount.Type == 'Partner') {
+                c.OwnerId = partnerEscalationQueueId;
+                c.Status = 'Escalated';
+                c.IsEscalated = true;
+            }
+
+            // Method 2: Contact Opt-Out
+            Contact relatedContact = contactMap.get(c.ContactId);
+            if (relatedContact != null && relatedContact.HasOptedOutOfEmail) {
+                c.Description = 'Phone Call ONLY - ' + c.Description;
+            }
+
+            // Method 3: Entitlement Subject Update
+            if (c.EntitlementId != null) {
+                // Ensure the subject update is concise and clear
+                String newSubject = 'Entitlement - ' + c.Subject;
+                newSubject = newSubject.length() > 255 ? newSubject.substring(0, 255) : newSubject;
+                c.Subject = newSubject;
+                c.Description = c.Subject + ' ' + c.Description;
+            }
+
+            // Method 4: Community Origin Case
+            if (c.Origin == 'Community') {
+                c.OwnerId = copadoSupportQueueId; // Use pre-fetched queue ID
+            }
+
+            // Method 5: High Priority Escalation
+            if (c.Priority == 'High') {
+                c.Status = 'Escalated';
+                c.IsEscalated = true;
+            }
+        }
+
+        update cases;
+    }
+    
+    private static Id getQueueIdByName(String queueName) {
+        List<Group> queueList = [SELECT Id FROM Group WHERE Type='Queue' AND Name = :queueName LIMIT 1];
+        if (!queueList.isEmpty()) {
+            return queueList[0].Id;
+        }
+        return null;
+    }
+}
