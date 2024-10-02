@@ -6,4 +6,4 @@ All 6 Apex Classes were generated via interaction with CopadoGPT, including iter
 
 Files are stored in this Repository as lines of code only - these files are not stored here in Salesforce Metadata Format nor Salesforce Source Format Git structure.
 
-The intended use is for a participant in Instructor-led or Self-paced Hands-on Training to simply copy/paste the lines of code directly into the Salesforce UI as net-new Apex Classes in an Org.
+The intended use is for a participant in instructor-led or self-paced Hands-on Training to simply copy/paste the lines of code directly into the Salesforce UI as net-new Apex Classes in an Org.
