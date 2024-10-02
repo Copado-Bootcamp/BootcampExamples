@@ -1,0 +1,21 @@
+@IsTest
+private class TestMethod2 {
+    @IsTest static void testContactOptOut() {
+        // Setup - Create a Contact with HasOptedOutOfEmail = true
+        Contact testContact = new Contact(LastName='Doe', HasOptedOutOfEmail=true);
+        insert testContact;
+        
+        // Setup - Create a Case related to the Contact
+        Case testCase = new Case(ContactId=testContact.Id, Description='Initial');
+        insert testCase;
+
+        // Act - Call the method under test
+        Test.startTest();
+        CaseUpdateHandler.updateCases(new List<Case>{testCase});
+        Test.stopTest();
+
+        // Assert - Retrieve the updated case and verify changes
+        testCase = [SELECT Description FROM Case WHERE Id = :testCase.Id];
+        System.assertEquals('Phone Call ONLY - Initial', testCase.Description, 'Case Description is not updated as expected.');
+    }
+}
