@@ -1,0 +1,31 @@
+@IsTest
+private class TestMethod3 {
+    @IsTest static void testEntitlementSubject() {
+        // Create test data
+        Account testAccount = new Account(Name='Sample Account for Entitlements');
+        insert testAccount;
+
+        Entitlement testEntitlement = new Entitlement(Name='Sample Entitlement', AccountId=testAccount.Id);
+        insert testEntitlement;
+
+        Case testCase = new Case(
+            AccountId = testAccount.Id,
+            EntitlementId = testEntitlement.Id,
+            Subject = 'Original Subject',
+            Description = 'Original Description'
+        );
+        insert testCase;
+
+        // Perform test
+        Test.startTest();
+        CaseUpdateHandler.updateCases(new List<Case>{testCase});
+        Test.stopTest();
+
+        // Retrieve updated case
+        Case updatedCase = [SELECT Subject, Description FROM Case WHERE Id = :testCase.Id];
+
+        // Asserts
+        System.assert(updatedCase.Subject.startsWith('Entitlement - '), 'Subject does not start with expected prefix.');
+        System.assert(updatedCase.Description.startsWith(updatedCase.Subject + ' '), 'Description does not start with expected prefix.');
+    }
+}
