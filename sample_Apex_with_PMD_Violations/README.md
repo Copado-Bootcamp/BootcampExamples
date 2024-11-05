@@ -7,3 +7,7 @@ However, the 6 Apex Classes in this folder were intentionally generated with sev
 Files are stored in this Repository as lines of code only - these files are not stored here in Salesforce Metadata Format nor Salesforce Source Format Git structure.
 
 The intended use is for a participant in instructor-led or self-paced Hands-on Training to simply copy/paste the lines of code directly into the Salesforce UI as net-new Apex Classes in an Org.
+
+**Assumption** the following Case Queues already exist in all Salesforce Orgs:
+> Partner Escalation Queue
+> Copado Support Queue
