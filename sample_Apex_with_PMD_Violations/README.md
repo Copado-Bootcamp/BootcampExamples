@@ -2,6 +2,8 @@
 
 This folder includes 1 Apex Class and the 5 Apex test Classes that, as a collection, are intended to provide coverage for the 1 Apex Class
 
+All 6 Apex Classes were generated via interaction with CopadoAI, including iterative refinements of the business requirements and acceptance criteria
+
 However, the 6 Apex Classes in this folder were intentionally generated with several common PMD Static Code Analysis Violations, for the purpose of Hands-on Training.
 
 Files are stored in this Repository as lines of code only - these files are not stored here in Salesforce Metadata Format nor Salesforce Source Format Git structure.
