@@ -30,25 +30,25 @@
         <locationX>176</locationX>
         <locationY>323</locationY>
         <inputAssignments>
-            <field>MailingCity</field>
+            <field>OtherCity</field>
             <value>
                 <elementReference>$Record.BillingCity</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
-            <field>MailingPostalCode</field>
+            <field>OtherPostalCode</field>
             <value>
                 <elementReference>$Record.BillingPostalCode</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
-            <field>MailingState</field>
+            <field>OtherState</field>
             <value>
                 <elementReference>$Record.BillingState</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
-            <field>MailingStreet</field>
+            <field>OtherStreet</field>
             <value>
                 <elementReference>$Record.BillingStreet</elementReference>
             </value>
