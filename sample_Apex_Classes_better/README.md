@@ -1,6 +1,6 @@
 # BETTER SAMPLE APEX CLASSES FOR HANDS-ON TRAINING
 
-This folder includes the same 1 Apex Class and the 1 Apex test Class that significantly improve Apex Test results and PMD SCA results above and beyond the 2 lesser quality versions of Case Update Handler. In fact, previous versions have the Test Class segmented into 4 individual Test Classes, while here the Tests are unified in a single Test Class.
+This folder includes the same 1 Apex Class and the 1 Apex test Class that significantly improve Apex Test results and PMD SCA results above and beyond the 2 lesser quality versions of Case Update Handler. In fact, previous versions have the Test Class segmented into 5 individual Test Classes, while here the Tests are unified in a single Test Class.
 
 The improvements were generated via interaction with CopadoAI, including iterative refinements of the business requirements and acceptance criteria
 
