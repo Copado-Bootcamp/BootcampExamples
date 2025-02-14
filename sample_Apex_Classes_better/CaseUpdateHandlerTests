@@ -1,0 +1,183 @@
+@IsTest
+private class CaseUpdateHandlerTests {
+    // Constants to avoid magic strings
+    private static final String PARTNER_TYPE = 'Partner';
+    private static final String COMMUNITY_ORIGIN = 'Community';
+    private static final String HIGH_PRIORITY = 'High';
+    private static final String ESCALATED_STATUS = 'Escalated';
+    
+    // Test data setup method to reduce code duplication
+    private static Case createTestCase(Map<String, Object> caseFields) {
+        Case testCase = new Case();
+        for (String field : caseFields.keySet()) {
+            testCase.put(field, caseFields.get(field));
+        }
+        return testCase;
+    }
+    
+    @TestSetup
+    static void setupTestData() {
+        // Create test queues if they don't exist
+        List<Group> queues = new List<Group>{
+            new Group(Name = 'Partner Escalation Queue', Type = 'Queue'),
+            new Group(Name = 'Copado Support Queue', Type = 'Queue')
+        };
+        insert queues;
+    }
+    
+    @IsTest
+    static void testPartnerAccountEscalation() {
+        // Setup
+        Account partnerAccount = new Account(Name = 'Test Partner', Type = PARTNER_TYPE);
+        insert partnerAccount;
+        
+        Case testCase = createTestCase(new Map<String, Object>{
+            'AccountId' => partnerAccount.Id,
+            'Status' => 'New'
+        });
+        insert testCase;
+        
+        // Execute
+        Test.startTest();
+        CaseUpdateHandler.updateCases(new List<Case>{testCase});
+        Test.stopTest();
+        
+        // Verify
+        Case updatedCase = [SELECT Status, IsEscalated, OwnerId FROM Case WHERE Id = :testCase.Id];
+        System.assertEquals(ESCALATED_STATUS, updatedCase.Status, 'Partner case should be escalated');
+        System.assert(updatedCase.IsEscalated, 'Partner case should be marked as escalated');
+    }
+    
+    @IsTest
+    static void testContactOptOutHandling() {
+        // Setup
+        Contact optOutContact = new Contact(
+            FirstName = 'John',
+            LastName = 'Doe',
+            HasOptedOutOfEmail = true
+        );
+        insert optOutContact;
+        
+        Case testCase = createTestCase(new Map<String, Object>{
+            'ContactId' => optOutContact.Id,
+            'Description' => 'Initial description'
+        });
+        insert testCase;
+        
+        // Execute
+        Test.startTest();
+        CaseUpdateHandler.updateCases(new List<Case>{testCase});
+        Test.stopTest();
+        
+        // Verify
+        Case updatedCase = [SELECT Description FROM Case WHERE Id = :testCase.Id];
+        System.assert(updatedCase.Description.startsWith('Phone Call ONLY'), 
+            'Description should be prefixed for opted-out contacts');
+    }
+    
+    @IsTest
+    static void testEntitlementCaseHandling() {
+        // Setup
+        Account testAccount = new Account(Name = 'Test Account');
+        insert testAccount;
+        
+        Entitlement testEntitlement = new Entitlement(
+            Name = 'Test Entitlement',
+            AccountId = testAccount.Id
+        );
+        insert testEntitlement;
+        
+        Case testCase = createTestCase(new Map<String, Object>{
+            'EntitlementId' => testEntitlement.Id,
+            'Subject' => 'Original Subject',
+            'Description' => 'Original Description'
+        });
+        insert testCase;
+        
+        // Execute
+        Test.startTest();
+        CaseUpdateHandler.updateCases(new List<Case>{testCase});
+        Test.stopTest();
+        
+        // Verify
+        Case updatedCase = [SELECT Subject, Description FROM Case WHERE Id = :testCase.Id];
+        System.assert(updatedCase.Subject.startsWith('Entitlement -'), 
+            'Subject should be prefixed for entitled cases');
+    }
+    
+    @IsTest
+    static void testCommunityOriginHandling() {
+        // Setup
+        Case testCase = createTestCase(new Map<String, Object>{
+            'Origin' => COMMUNITY_ORIGIN
+        });
+        insert testCase;
+        
+        // Execute
+        Test.startTest();
+        CaseUpdateHandler.updateCases(new List<Case>{testCase});
+        Test.stopTest();
+        
+        // Verify
+        Case updatedCase = [SELECT OwnerId FROM Case WHERE Id = :testCase.Id];
+        Id queueId = [SELECT Id FROM Group 
+                     WHERE Type = 'Queue' AND Name = 'Copado Support Queue' 
+                     LIMIT 1].Id;
+        System.assertEquals(queueId, updatedCase.OwnerId, 
+            'Community cases should be assigned to Copado Support Queue');
+    }
+    
+    @IsTest
+    static void testHighPriorityHandling() {
+        // Setup
+        Case testCase = createTestCase(new Map<String, Object>{
+            'Priority' => HIGH_PRIORITY,
+            'Status' => 'New'
+        });
+        insert testCase;
+        
+        // Execute
+        Test.startTest();
+        CaseUpdateHandler.updateCases(new List<Case>{testCase});
+        Test.stopTest();
+        
+        // Verify
+        Case updatedCase = [SELECT Status, IsEscalated FROM Case WHERE Id = :testCase.Id];
+        System.assertEquals(ESCALATED_STATUS, updatedCase.Status, 
+            'High priority cases should be escalated');
+        System.assert(updatedCase.IsEscalated, 
+            'High priority cases should be marked as escalated');
+    }
+    
+    @IsTest
+    static void testBulkOperation() {
+        // Setup - Create multiple cases with different scenarios
+        Account partnerAccount = new Account(Name = 'Test Partner', Type = PARTNER_TYPE);
+        insert partnerAccount;
+        
+        List<Case> testCases = new List<Case>{
+            createTestCase(new Map<String, Object>{
+                'AccountId' => partnerAccount.Id,
+                'Status' => 'New'
+            }),
+            createTestCase(new Map<String, Object>{
+                'Priority' => HIGH_PRIORITY,
+                'Status' => 'New'
+            }),
+            createTestCase(new Map<String, Object>{
+                'Origin' => COMMUNITY_ORIGIN
+            })
+        };
+        insert testCases;
+        
+        // Execute
+        Test.startTest();
+        CaseUpdateHandler.updateCases(testCases);
+        Test.stopTest();
+        
+        // Verify
+        List<Case> updatedCases = [SELECT Status, IsEscalated, Origin, Priority 
+                                 FROM Case WHERE Id IN :testCases];
+        System.assertEquals(3, updatedCases.size(), 'All cases should be processed');
+    }
+}
