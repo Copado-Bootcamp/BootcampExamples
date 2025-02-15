@@ -5,8 +5,6 @@ private class CaseUpdateHandlerTests {
     private static final String HIGH_PRIORITY = 'High';
     private static final String ESCALATED_STATUS = 'Escalated';
     
-    // Remove @TestSetup since we don't need to create queues
-    
     @IsTest
     static void testPartnerAccountEscalation() {
         // Create test account
@@ -59,7 +57,7 @@ private class CaseUpdateHandlerTests {
         for(Integer i = 0; i < 200; i++) {
             testAccounts.add(new Account(
                 Name = 'Test Account ' + i,
-                Type = i < 100 ? PARTNER_TYPE : 'Customer'
+                Type = (Math.mod(i, 2) == 0) ? PARTNER_TYPE : 'Customer'
             ));
         }
         insert testAccounts;
@@ -70,7 +68,7 @@ private class CaseUpdateHandlerTests {
             testCases.add(new Case(
                 Subject = 'Test Case ' + i,
                 AccountId = testAccounts[i].Id,
-                Origin = i % 2 == 0 ? COMMUNITY_ORIGIN : 'Web'
+                Origin = (Math.mod(i, 2) == 0) ? COMMUNITY_ORIGIN : 'Web'
             ));
         }
         insert testCases;
@@ -89,9 +87,6 @@ private class CaseUpdateHandlerTests {
                 System.assertEquals(ESCALATED_STATUS, c.Status, 'Partner cases should be escalated');
                 System.assertEquals(true, c.IsEscalated, 'Partner cases should have IsEscalated set to true');
             }
-            // Add other relevant assertions
         }
     }
-    
-    // Rest of the test methods remain the same...
 }
