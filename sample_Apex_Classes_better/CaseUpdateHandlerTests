@@ -94,18 +94,17 @@ private class CaseUpdateHandlerTests {
     }
     
     @IsTest
-    static void testNullCaseHandling() {
+    static void testEmptyAndNullCaseHandling() {
         Test.startTest();
-        CaseUpdateHandler.updateCases(null);
-        Test.stopTest();
-        // No assertions needed as we're just ensuring no exceptions are thrown
-    }
-    
-    @IsTest
-    static void testEmptyCaseListHandling() {
-        Test.startTest();
+        // Test empty list
         CaseUpdateHandler.updateCases(new List<Case>());
+        // Test null input
+        try {
+            CaseUpdateHandler.updateCases(null);
+            System.assert(true, 'Null input handled successfully');
+        } catch (Exception e) {
+            System.assert(false, 'Should handle null input without throwing exception');
+        }
         Test.stopTest();
-        // No assertions needed as we're just ensuring no exceptions are thrown
     }
 }
