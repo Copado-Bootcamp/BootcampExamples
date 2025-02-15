@@ -4,6 +4,12 @@ This folder includes the same 1 Apex Class and the 1 Apex test Class that signif
 
 The improvements were generated via interaction with CopadoAI, including iterative refinements of the business requirements and acceptance criteria
 
+The improvements are so significant that the final versions have:
+> 97% Apex Code Coverage
+> No Apex Unit Test Failures
+> No PMD Security Violations
+> No PMD Code Style Violations
+
 Files are stored in this Repository as lines of code only - these files are not stored here in Salesforce Metadata Format nor Salesforce Source Format Git structure.
 
 The intended use is for a participant in instructor-led or self-paced Hands-on Training to simply copy/paste the lines of code directly into the Salesforce UI as net-new Apex Classes in an Org.
