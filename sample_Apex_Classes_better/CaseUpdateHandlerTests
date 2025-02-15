@@ -17,7 +17,8 @@ private class CaseUpdateHandlerTests {
         // Create test case
         Case testCase = new Case(
             Subject = 'Test Partner Case',
-            AccountId = testAccount.Id
+            AccountId = testAccount.Id,
+            Priority = HIGH_PRIORITY
         );
         insert testCase;
         
@@ -36,7 +37,8 @@ private class CaseUpdateHandlerTests {
         // Create test case with Community origin
         Case testCase = new Case(
             Subject = 'Test Community Case',
-            Origin = COMMUNITY_ORIGIN
+            Origin = COMMUNITY_ORIGIN,
+            Priority = HIGH_PRIORITY
         );
         insert testCase;
         
@@ -62,13 +64,14 @@ private class CaseUpdateHandlerTests {
         }
         insert testAccounts;
         
-        // Create test cases
+        // Create test cases with mixed scenarios
         List<Case> testCases = new List<Case>();
         for(Integer i = 0; i < 200; i++) {
             testCases.add(new Case(
                 Subject = 'Test Case ' + i,
                 AccountId = testAccounts[i].Id,
-                Origin = (Math.mod(i, 2) == 0) ? COMMUNITY_ORIGIN : 'Web'
+                Origin = (Math.mod(i, 2) == 0) ? COMMUNITY_ORIGIN : 'Web',
+                Priority = (Math.mod(i, 3) == 0) ? HIGH_PRIORITY : 'Medium'
             ));
         }
         insert testCases;
@@ -78,7 +81,7 @@ private class CaseUpdateHandlerTests {
         Test.stopTest();
         
         // Verify results
-        testCases = [SELECT Status, IsEscalated, OwnerId FROM Case WHERE Id IN :testCases];
+        testCases = [SELECT Status, IsEscalated, OwnerId, Priority FROM Case WHERE Id IN :testCases];
         Group partnerQueue = [SELECT Id FROM Group WHERE Type = 'Queue' AND Name = 'Partner Escalation Queue' LIMIT 1];
         Group supportQueue = [SELECT Id FROM Group WHERE Type = 'Queue' AND Name = 'Copado Support Queue' LIMIT 1];
         
@@ -88,5 +91,21 @@ private class CaseUpdateHandlerTests {
                 System.assertEquals(true, c.IsEscalated, 'Partner cases should have IsEscalated set to true');
             }
         }
+    }
+    
+    @IsTest
+    static void testNullCaseHandling() {
+        Test.startTest();
+        CaseUpdateHandler.updateCases(null);
+        Test.stopTest();
+        // No assertions needed as we're just ensuring no exceptions are thrown
+    }
+    
+    @IsTest
+    static void testEmptyCaseListHandling() {
+        Test.startTest();
+        CaseUpdateHandler.updateCases(new List<Case>());
+        Test.stopTest();
+        // No assertions needed as we're just ensuring no exceptions are thrown
     }
 }
