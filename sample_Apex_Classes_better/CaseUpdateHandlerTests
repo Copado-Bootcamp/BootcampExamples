@@ -96,14 +96,16 @@ private class CaseUpdateHandlerTests {
     @IsTest
     static void testEmptyAndNullCaseHandling() {
         Test.startTest();
-        // Test empty list
+        // Test empty list - should handle gracefully
         CaseUpdateHandler.updateCases(new List<Case>());
-        // Test null input
+        
+        // Test null input - should throw IllegalArgumentException
         try {
             CaseUpdateHandler.updateCases(null);
-            System.assert(true, 'Null input handled successfully');
-        } catch (Exception e) {
-            System.assert(false, 'Should handle null input without throwing exception');
+            System.assert(false, 'Expected IllegalArgumentException for null input');
+        } catch (IllegalArgumentException e) {
+            System.assertEquals('Cases list cannot be null', e.getMessage(), 
+                              'Expected specific error message for null input');
         }
         Test.stopTest();
     }
