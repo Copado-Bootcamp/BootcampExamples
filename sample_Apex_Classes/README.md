@@ -11,3 +11,7 @@ The intended use is for a participant in instructor-led or self-paced Hands-on T
 **Assumption** the following Case Queues already exist in all Salesforce Orgs:
 1. Partner Escalation Queue
 2. Copado Support Queue
+-------
+# Change Log:
+
+13 Feb 2026 - jnelson updated the CaseUpdateHandler to resolve legacy tech debt that was causing PMD Violations for 'Security' and 'Code Style'
