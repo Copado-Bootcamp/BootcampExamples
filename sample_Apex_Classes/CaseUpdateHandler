@@ -1,21 +1,53 @@
-public class CaseUpdateHandler {
+public with sharing class CaseUpdateHandler {
 
     public static void updateCases(List<Case> cases) {
         // Pre-fetch the Partner Escalation Queue Id to optimize SOQL queries
         Id partnerEscalationQueueId = getQueueIdByName('Partner Escalation Queue');
-        Id copadoSupportQueueId = getQueueIdByName('Copado Support Queue'); // Assuming Method 4 might need this
+        Id copadoSupportQueueId = getQueueIdByName('Copado Support Queue');
         
         // Collect all AccountIds and ContactIds from the cases to minimize SOQL queries
         Set<Id> accountIds = new Set<Id>();
         Set<Id> contactIds = new Set<Id>();
         for (Case c : cases) {
-            if (c.AccountId != null) accountIds.add(c.AccountId);
-            if (c.ContactId != null) contactIds.add(c.ContactId);
+            if (c.AccountId != null) {
+                accountIds.add(c.AccountId);
+            }
+            if (c.ContactId != null) {
+                contactIds.add(c.ContactId);
+            }
         }
         
-        // Query all related Accounts and Contacts at once
-        Map<Id, Account> accountMap = new Map<Id, Account>([SELECT Id, Type FROM Account WHERE Id IN :accountIds]);
-        Map<Id, Contact> contactMap = new Map<Id, Contact>([SELECT Id, HasOptedOutOfEmail FROM Contact WHERE Id IN :contactIds]);
+        // CRUD/FLS Check: Verify read access to Account and its fields
+        if (!Schema.sObjectType.Account.isAccessible() || 
+            !Schema.sObjectType.Account.fields.Type.isAccessible()) {
+            throw new SecurityException('Insufficient permissions to read Account records');
+        }
+        
+        // Query all related Accounts with security enforced
+        Map<Id, Account> accountMap = new Map<Id, Account>(
+            [SELECT Id, Type FROM Account WHERE Id IN :accountIds WITH SECURITY_ENFORCED]
+        );
+        
+        // CRUD/FLS Check: Verify read access to Contact and its fields
+        if (!Schema.sObjectType.Contact.isAccessible() || 
+            !Schema.sObjectType.Contact.fields.HasOptedOutOfEmail.isAccessible()) {
+            throw new SecurityException('Insufficient permissions to read Contact records');
+        }
+        
+        // Query all related Contacts with security enforced
+        Map<Id, Contact> contactMap = new Map<Id, Contact>(
+            [SELECT Id, HasOptedOutOfEmail FROM Contact WHERE Id IN :contactIds WITH SECURITY_ENFORCED]
+        );
+        
+        // CRUD/FLS Check: Verify update access to Case and its fields
+        if (!Schema.sObjectType.Case.isUpdateable() ||
+            !Schema.sObjectType.Case.fields.OwnerId.isUpdateable() ||
+            !Schema.sObjectType.Case.fields.Status.isUpdateable() ||
+            !Schema.sObjectType.Case.fields.IsEscalated.isUpdateable() ||
+            !Schema.sObjectType.Case.fields.Description.isUpdateable() ||
+            !Schema.sObjectType.Case.fields.Subject.isUpdateable()) {
+            throw new SecurityException('Insufficient permissions to update Case records');
+        }
         
         for (Case c : cases) {
             // Method 1: Partner Account Escalation
@@ -43,7 +75,7 @@ public class CaseUpdateHandler {
 
             // Method 4: Community Origin Case
             if (c.Origin == 'Community') {
-                c.OwnerId = copadoSupportQueueId; // Use pre-fetched queue ID
+                c.OwnerId = copadoSupportQueueId;
             }
 
             // Method 5: High Priority Escalation
@@ -57,10 +89,25 @@ public class CaseUpdateHandler {
     }
     
     private static Id getQueueIdByName(String queueName) {
-        List<Group> queueList = [SELECT Id FROM Group WHERE Type='Queue' AND Name = :queueName LIMIT 1];
+        // CRUD/FLS Check: Verify read access to Group
+        if (!Schema.sObjectType.Group.isAccessible()) {
+            throw new SecurityException('Insufficient permissions to read Queue records');
+        }
+        
+        List<Group> queueList = [
+            SELECT Id 
+            FROM Group 
+            WHERE Type='Queue' AND Name = :queueName 
+            WITH SECURITY_ENFORCED
+            LIMIT 1
+        ];
+        
         if (!queueList.isEmpty()) {
             return queueList[0].Id;
         }
         return null;
     }
+    
+    // Custom exception for security violations
+    public class SecurityException extends Exception {}
 }
