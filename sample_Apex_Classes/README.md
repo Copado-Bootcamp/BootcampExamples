@@ -1,6 +1,6 @@
 # SAMPLE APEX CLASSES FOR HANDS-ON TRAINING
 
-This folder includes 1 Apex Class and the 5 Apex test Classes that, as a collection, provide 97% coverage for the 1 Apex Class
+This folder includes 1 Apex Class and the 5 Apex test Classes that, as a collection, provide 90% coverage for the 1 Apex Class
 
 All 6 Apex Classes were generated via interaction with CopadoAI, including iterative refinements of the business requirements and acceptance criteria
 
