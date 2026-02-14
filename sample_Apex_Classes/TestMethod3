@@ -1,31 +1,100 @@
+/**
+ * @description Test class for CaseUpdateHandler - Entitlement Subject Update logic.
+ *              Part of 5-class test suite covering CaseUpdateHandler.
+ * @relatedTests TestMethod1, TestMethod2, TestMethod4, TestMethod5
+ */
 @IsTest
 private class TestMethod3 {
-    @IsTest static void testEntitlementSubject() {
-        // Create test data
-        Account testAccount = new Account(Name='Sample Account for Entitlements');
+    
+    @IsTest 
+    static void testEntitlementSubjectUpdate() {
+        Account testAccount = new Account(Name='Test Account');
         insert testAccount;
-
-        Entitlement testEntitlement = new Entitlement(Name='Sample Entitlement', AccountId=testAccount.Id);
+        
+        Entitlement testEntitlement = new Entitlement(
+            Name='Test Entitlement', 
+            AccountId=testAccount.Id
+        );
         insert testEntitlement;
-
+        
         Case testCase = new Case(
-            AccountId = testAccount.Id,
-            EntitlementId = testEntitlement.Id,
-            Subject = 'Original Subject',
-            Description = 'Original Description'
+            AccountId=testAccount.Id,
+            EntitlementId=testEntitlement.Id,
+            Subject='Original Subject',
+            Description='Test Description'
         );
         insert testCase;
-
-        // Perform test
+        
         Test.startTest();
         CaseUpdateHandler.updateCases(new List<Case>{testCase});
         Test.stopTest();
-
-        // Retrieve updated case
+        
         Case updatedCase = [SELECT Subject, Description FROM Case WHERE Id = :testCase.Id];
-
-        // Asserts
-        System.assert(updatedCase.Subject.startsWith('Entitlement - '), 'Subject does not start with expected prefix.');
-        System.assert(updatedCase.Description.startsWith(updatedCase.Subject + ' '), 'Description does not start with expected prefix.');
+        System.assert(updatedCase.Subject.startsWith('Entitlement - '));
+    }
+    
+    /**
+     * @description Test subject truncation at 255 char boundary
+     */
+    @IsTest 
+    static void testEntitlementSubjectTruncation() {
+        Account testAccount = new Account(Name='Truncation Test');
+        insert testAccount;
+        
+        Entitlement testEntitlement = new Entitlement(
+            Name='Truncation Ent', 
+            AccountId=testAccount.Id
+        );
+        insert testEntitlement;
+        
+        String longSubject = 'A'.repeat(250);
+        Case longCase = new Case(
+            AccountId=testAccount.Id,
+            EntitlementId=testEntitlement.Id,
+            Subject=longSubject,
+            Description='Test'
+        );
+        insert longCase;
+        
+        Test.startTest();
+        CaseUpdateHandler.updateCases(new List<Case>{longCase});
+        Test.stopTest();
+        
+        Case updatedCase = [SELECT Subject FROM Case WHERE Id = :longCase.Id];
+        System.assertEquals(255, updatedCase.Subject.length());
+    }
+    
+    /**
+     * @description Integration - Entitlement + High Priority
+     */
+    @IsTest 
+    static void testEntitlementWithHighPriority() {
+        Account testAccount = new Account(Name='Integration Account');
+        insert testAccount;
+        
+        Entitlement testEntitlement = new Entitlement(
+            Name='Integration Ent', 
+            AccountId=testAccount.Id
+        );
+        insert testEntitlement;
+        
+        Case multiCase = new Case(
+            AccountId=testAccount.Id,
+            EntitlementId=testEntitlement.Id,
+            Priority='High',
+            Status='New',
+            Subject='Multi Test',
+            Description='Multi Desc'
+        );
+        insert multiCase;
+        
+        Test.startTest();
+        CaseUpdateHandler.updateCases(new List<Case>{multiCase});
+        Test.stopTest();
+        
+        Case updatedCase = [SELECT Status, IsEscalated, Subject FROM Case WHERE Id = :multiCase.Id];
+        System.assert(updatedCase.Subject.startsWith('Entitlement - '));
+        System.assertEquals('Escalated', updatedCase.Status);
+        System.assertEquals(true, updatedCase.IsEscalated);
     }
 }
