@@ -23,9 +23,9 @@ public with sharing class CaseUpdateHandler {
             throw new SecurityException('Insufficient permissions to read Account records');
         }
         
-        // Query all related Accounts with security enforced
+        // Query all related Accounts with user mode security enforced
         Map<Id, Account> accountMap = new Map<Id, Account>(
-            [SELECT Id, Type FROM Account WHERE Id IN :accountIds WITH SECURITY_ENFORCED]
+            [SELECT Id, Type FROM Account WHERE Id IN :accountIds WITH USER_MODE]
         );
         
         // CRUD/FLS Check: Verify read access to Contact and its fields
@@ -34,9 +34,9 @@ public with sharing class CaseUpdateHandler {
             throw new SecurityException('Insufficient permissions to read Contact records');
         }
         
-        // Query all related Contacts with security enforced
+        // Query all related Contacts with user mode security enforced
         Map<Id, Contact> contactMap = new Map<Id, Contact>(
-            [SELECT Id, HasOptedOutOfEmail FROM Contact WHERE Id IN :contactIds WITH SECURITY_ENFORCED]
+            [SELECT Id, HasOptedOutOfEmail FROM Contact WHERE Id IN :contactIds WITH USER_MODE]
         );
         
         // CRUD/FLS Check: Verify update access to Case and its fields
@@ -98,7 +98,7 @@ public with sharing class CaseUpdateHandler {
             SELECT Id 
             FROM Group 
             WHERE Type='Queue' AND Name = :queueName 
-            WITH SECURITY_ENFORCED
+            WITH USER_MODE
             LIMIT 1
         ];
         
