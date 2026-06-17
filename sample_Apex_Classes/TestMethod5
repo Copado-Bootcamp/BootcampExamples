@@ -1,16 +1,31 @@
+/**
+ * @description Test class for CaseUpdateHandler - High Priority Escalation and bulk integration.
+ *              Part of 5-class test suite covering CaseUpdateHandler.
+ * @relatedTests TestMethod1, TestMethod2, TestMethod3, TestMethod4
+ */
 @IsTest
 private class TestMethod5 {
     
-    // EXISTING METHOD - DON'T TOUCH
     @IsTest 
     static void testHighPriorityEscalation() {
-        // ... existing code stays exactly as-is ...
+        Case highPriorityCase = new Case(
+            Priority='High',
+            Status='New',
+            Subject='High Priority Test'
+        );
+        insert highPriorityCase;
+        
+        Test.startTest();
+        CaseUpdateHandler.updateCases(new List<Case>{highPriorityCase});
+        Test.stopTest();
+        
+        Case updatedCase = [SELECT Status, IsEscalated FROM Case WHERE Id = :highPriorityCase.Id];
+        System.assertEquals('Escalated', updatedCase.Status);
+        System.assertEquals(true, updatedCase.IsEscalated);
     }
     
-    // ✅ NEW METHOD 1: Empty list handling
     @IsTest 
     static void testEmptyListHandling() {
-        // Covers: Lines 3-19 (early exit when empty list passed)
         Test.startTest();
         CaseUpdateHandler.updateCases(new List<Case>());
         Test.stopTest();
@@ -18,10 +33,8 @@ private class TestMethod5 {
         System.assert(true, 'Empty list should be handled gracefully without errors.');
     }
     
-    // ✅ NEW METHOD 2: Negative condition - NOT High Priority
     @IsTest 
     static void testNonHighPriorityNotEscalated() {
-        // Covers: Negative branch of line 77 (when Priority != 'High')
         Case lowPriorityCase = new Case(
             Priority='Low', 
             Status='New', 
@@ -40,10 +53,8 @@ private class TestMethod5 {
             'IsEscalated should remain false.');
     }
     
-    // ✅ NEW METHOD 3: Bulk integration - all conditions simultaneously
     @IsTest 
     static void testBulkAllConditionsIntegration() {
-        // Covers: All methods working together in bulk, realistic production scenario
         Account partnerAccount = new Account(Name='Bulk Partner', Type='Partner');
         Account normalAccount = new Account(Name='Bulk Normal', Type='Customer');
         insert new List<Account>{partnerAccount, normalAccount};
@@ -55,13 +66,9 @@ private class TestMethod5 {
         insert testEnt;
         
         List<Case> bulkCases = new List<Case>{
-            // Triple condition: Partner + Community + High (Methods 1, 4, 5)
             new Case(AccountId=partnerAccount.Id, Origin='Community', Priority='High', Status='New', Subject='Triple'),
-            // Double condition: OptOut + High (Methods 2, 5)
             new Case(ContactId=optedOutContact.Id, Priority='High', Status='New', Description='Double', Subject='Double'),
-            // Double condition: Entitlement + High (Methods 3, 5)
             new Case(AccountId=normalAccount.Id, EntitlementId=testEnt.Id, Priority='High', Status='New', Subject='Ent High', Description='Desc'),
-            // Baseline: No conditions
             new Case(Priority='Low', Origin='Web', Status='New', Subject='Normal')
         };
         insert bulkCases;
@@ -75,23 +82,19 @@ private class TestMethod5 {
             FROM Case WHERE Id IN :bulkCases
         ]);
         
-        // Triple condition case
         Case triple = updatedCases.get(bulkCases[0].Id);
         System.assertEquals('Escalated', triple.Status, 'Triple condition should escalate.');
         System.assertEquals(true, triple.IsEscalated, 'Triple IsEscalated should be true.');
         System.assertNotEquals(null, triple.OwnerId, 'Queue should be assigned.');
         
-        // OptOut + High case
         Case optOut = updatedCases.get(bulkCases[1].Id);
         System.assertEquals('Escalated', optOut.Status, 'High priority should escalate.');
         System.assert(optOut.Description.startsWith('Phone Call ONLY - '), 'OptOut prefix should apply.');
         
-        // Entitlement + High case
         Case ent = updatedCases.get(bulkCases[2].Id);
         System.assertEquals('Escalated', ent.Status, 'Entitlement + High should escalate.');
         System.assert(ent.Subject.startsWith('Entitlement - '), 'Entitlement prefix should apply.');
         
-        // Normal case
         Case normal = updatedCases.get(bulkCases[3].Id);
         System.assertEquals('New', normal.Status, 'Normal case should remain unchanged.');
         System.assertEquals(false, normal.IsEscalated, 'Normal case should not escalate.');
