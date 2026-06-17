@@ -15,3 +15,4 @@ The intended use is for a participant in instructor-led or self-paced Hands-on T
 # Change Log:
 
 13 Feb 2026 - jnelson updated the CaseUpdateHandler and the 5 Apex Test Classes to resolve legacy tech debt that was causing PMD Violations for 'Security' and 'Code Style'
+17 Jun 2026 - jnelson updated the CaseUpdateHandler to address Salesforce Summer '26 changes which deprecated WITH SECURITY_ENFORCED. Replaced WITH SECURITY_ENFORCED with WITH USER_MODE. Also made minor improvements to the TestMethod5 Apex Class
