@@ -20,4 +20,4 @@ The intended use is for a participant in instructor-led or self-paced Hands-on T
 
 # Change Log:
 
-17 Jun 2026 - jnelson updated the CaseUpdateHandler to address Salesforce Summer '26 changes which deprecated WITH SECURITY_ENFORCED. Replaced WITH SECURITY_ENFORCED with WITH USER_MODE. Also made minor improvements to the TestMethod5 Apex Class
+17 Jun 2026 - jnelson updated the CaseUpdateHandler to address Salesforce Summer '26 changes which deprecated WITH SECURITY_ENFORCED. Replaced WITH SECURITY_ENFORCED with WITH USER_MODE.
