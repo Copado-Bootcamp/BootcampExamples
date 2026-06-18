@@ -27,7 +27,7 @@ public with sharing class CaseUpdateHandler {
                             FROM Group 
                             WHERE Type = 'Queue' 
                             AND Name IN ('Partner Escalation Queue', 'Copado Support Queue')
-                            WITH SECURITY_ENFORCED];
+                            WITH USER_MODE];
         
         Map<String, Id> queueMap = new Map<String, Id>();
         for(Group queue : queues) {
@@ -47,7 +47,7 @@ public with sharing class CaseUpdateHandler {
             SELECT Id, Type 
             FROM Account 
             WHERE Id IN :accountIds
-            WITH SECURITY_ENFORCED
+            WITH USER_MODE
         ]);
 
         // Process cases
